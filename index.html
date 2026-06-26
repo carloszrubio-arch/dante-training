@@ -9,6 +9,8 @@
 <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: 'Nunito', 'Segoe UI', sans-serif; }
@@ -16,9 +18,23 @@
 </head>
 <body>
 <div id="root"></div>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyD6omhJOYadW0paJIpnwgDDkMEsHWhXWuY",
+    authDomain: "dante-training-e30c0.firebaseapp.com",
+    projectId: "dante-training-e30c0",
+    storageBucket: "dante-training-e30c0.firebasestorage.app",
+    messagingSenderId: "1059768634691",
+    appId: "1:1059768634691:web:838f23a683a9032ff573f6"
+  };
+  firebase.initializeApp(firebaseConfig);
+  window.__db = firebase.firestore();
+</script>
 <script type="text/babel" data-presets="react">
 
 const ADMIN_PASSWORD = "coach2026";
+const db = window.__db;
+const docRef = db.collection("dante-training").doc("shared-data");
 
 const DEFAULT_DAYS = [
   { id: 0, name: "Lunes", short: "LUN", focus: "Pecho & Tríceps", emoji: "💪", color: "#FF6B35", bg: "#FFF0EB" },
@@ -82,24 +98,11 @@ function getTodayIndex() {
 
 function WorkoutApp() {
   const [activeDay, setActiveDay] = React.useState(getTodayIndex());
-  const [dayInfo, setDayInfo] = React.useState(() => {
-    try {
-      const saved = localStorage.getItem("wk_dayinfo");
-      return saved ? JSON.parse(saved) : DEFAULT_DAYS;
-    } catch { return DEFAULT_DAYS; }
-  });
-  const [exercises, setExercises] = React.useState(() => {
-    try {
-      const saved = localStorage.getItem("wk_exercises");
-      return saved ? JSON.parse(saved) : DEFAULT_EXERCISES;
-    } catch { return DEFAULT_EXERCISES; }
-  });
-  const [checked, setChecked] = React.useState(() => {
-    try {
-      const saved = localStorage.getItem("wk_checked");
-      return saved ? JSON.parse(saved) : {};
-    } catch { return {}; }
-  });
+  const [dayInfo, setDayInfo] = React.useState(DEFAULT_DAYS);
+  const [exercises, setExercises] = React.useState(DEFAULT_EXERCISES);
+  const [checked, setChecked] = React.useState({});
+  const [loaded, setLoaded] = React.useState(false);
+  const [syncError, setSyncError] = React.useState(false);
   const [weekKey] = React.useState(() => {
     const now = new Date();
     const startOfYear = new Date(now.getFullYear(), 0, 1);
@@ -115,17 +118,41 @@ function WorkoutApp() {
   const [addingExercise, setAddingExercise] = React.useState(false);
   const [newEx, setNewEx] = React.useState({ name: "", sets: "", videoUrl: "", note: "" });
 
+  // Subscribe to real-time updates from Firestore
   React.useEffect(() => {
-    localStorage.setItem("wk_dayinfo", JSON.stringify(dayInfo));
-  }, [dayInfo]);
+    const unsubscribe = docRef.onSnapshot(
+      (snap) => {
+        if (snap.exists) {
+          const data = snap.data();
+          setDayInfo(data.dayInfo || DEFAULT_DAYS);
+          setExercises(data.exercises || DEFAULT_EXERCISES);
+          setChecked(data.checked || {});
+        } else {
+          // First time ever — seed the cloud document with defaults
+          docRef.set({ dayInfo: DEFAULT_DAYS, exercises: DEFAULT_EXERCISES, checked: {} });
+        }
+        setLoaded(true);
+        setSyncError(false);
+      },
+      (err) => {
+        console.error("Firestore sync error:", err);
+        setSyncError(true);
+        setLoaded(true);
+      }
+    );
+    return () => unsubscribe();
+  }, []);
 
+  // Push local changes up to Firestore (skip the very first render before cloud data arrives)
+  const skipFirstWrite = React.useRef(true);
   React.useEffect(() => {
-    localStorage.setItem("wk_exercises", JSON.stringify(exercises));
-  }, [exercises]);
-
-  React.useEffect(() => {
-    localStorage.setItem("wk_checked", JSON.stringify(checked));
-  }, [checked]);
+    if (!loaded) return;
+    if (skipFirstWrite.current) { skipFirstWrite.current = false; return; }
+    docRef.set({ dayInfo, exercises, checked }, { merge: true }).catch(err => {
+      console.error("Firestore write error:", err);
+      setSyncError(true);
+    });
+  }, [dayInfo, exercises, checked, loaded]);
 
   const day = dayInfo[activeDay];
   const dayExercises = exercises[activeDay] || [];
@@ -206,12 +233,27 @@ function WorkoutApp() {
 
   const wp = weeklyProgress();
 
+  if (!loaded) {
+    return (
+      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#0d3b1e", color: "#fff", flexDirection: "column", gap: 12 }}>
+        <div style={{ fontSize: 48 }}>⚽</div>
+        <div style={{ fontWeight: 800, fontSize: 16 }}>Conectando con la nube...</div>
+      </div>
+    );
+  }
+
   return (
     <div style={{
       fontFamily: "'Nunito', 'Segoe UI', sans-serif", minHeight: "100vh",
       background: "linear-gradient(180deg, #eef7ee 0%, #fdf9f0 100%)",
       backgroundImage: "repeating-linear-gradient(180deg, rgba(20,90,50,0.025) 0px, rgba(20,90,50,0.025) 40px, transparent 40px, transparent 80px), linear-gradient(180deg, #eef7ee 0%, #fdf9f0 100%)"
     }}>
+      {syncError && (
+        <div style={{ background: "#DC2626", color: "#fff", textAlign: "center", padding: "8px", fontSize: 13, fontWeight: 700 }}>
+          ⚠️ Sin conexión con la nube — revisa tu internet o la configuración de Firebase
+        </div>
+      )}
+
 
       {/* HEADER */}
       <div style={{
