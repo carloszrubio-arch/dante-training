@@ -1,0 +1,1640 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Dante's Training</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet">
+<script crossorigin src="https://cdn.jsdelivr.net/npm/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Nunito', 'Segoe UI', sans-serif; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyD6omhJOYadW0paJIpnwgDDkMEsHWhXWuY",
+    authDomain: "dante-training-e30c0.firebaseapp.com",
+    projectId: "dante-training-e30c0",
+    storageBucket: "dante-training-e30c0.firebasestorage.app",
+    messagingSenderId: "1059768634691",
+    appId: "1:1059768634691:web:838f23a683a9032ff573f6"
+  };
+  firebase.initializeApp(firebaseConfig);
+  window.__db = firebase.firestore();
+</script>
+<script>
+const ADMIN_PASSWORD = "coach2026";
+const db = window.__db;
+const docRef = db.collection("dante-training").doc("shared-data");
+const DEFAULT_DAYS = [{
+  id: 0,
+  name: "Lunes",
+  short: "LUN",
+  focus: "Pecho & Tríceps",
+  emoji: "💪",
+  color: "#FF6B35",
+  bg: "#FFF0EB"
+}, {
+  id: 1,
+  name: "Martes",
+  short: "MAR",
+  focus: "Espalda & Bíceps",
+  emoji: "🏋️",
+  color: "#7C3AED",
+  bg: "#F3EEFF"
+}, {
+  id: 2,
+  name: "Miércoles",
+  short: "MIÉ",
+  focus: "Cardio & Core",
+  emoji: "🔥",
+  color: "#059669",
+  bg: "#ECFDF5"
+}, {
+  id: 3,
+  name: "Jueves",
+  short: "JUE",
+  focus: "Agilidad & Fuerza ⚽",
+  emoji: "⚡",
+  color: "#DC2626",
+  bg: "#FEF2F2"
+}, {
+  id: 4,
+  name: "Viernes",
+  short: "VIE",
+  focus: "Piernas & Glúteos",
+  emoji: "🦵",
+  color: "#D97706",
+  bg: "#FFFBEB"
+}, {
+  id: 5,
+  name: "Sábado",
+  short: "SÁB",
+  focus: "Full Body",
+  emoji: "🌟",
+  color: "#0284C7",
+  bg: "#F0F9FF"
+}, {
+  id: 6,
+  name: "Domingo",
+  short: "DOM",
+  focus: "Movilidad & Descanso",
+  emoji: "🧘",
+  color: "#DB2777",
+  bg: "#FDF2F8"
+}];
+const DEFAULT_EXERCISES = {
+  0: [{
+    id: "0-0",
+    name: "Press de Banca",
+    sets: "4x10",
+    videoUrl: "https://www.youtube.com/watch?v=rT7DgCr-3pg",
+    note: "Mantén los hombros retraídos"
+  }, {
+    id: "0-1",
+    name: "Fondos en paralelas",
+    sets: "3x12",
+    videoUrl: "https://www.youtube.com/watch?v=2z8JmcrW-As",
+    note: "Inclina el torso hacia adelante"
+  }, {
+    id: "0-2",
+    name: "Extensiones de tríceps",
+    sets: "3x15",
+    videoUrl: "",
+    note: "Codo fijo, no balancees"
+  }],
+  1: [{
+    id: "1-0",
+    name: "Dominadas",
+    sets: "4x8",
+    videoUrl: "https://www.youtube.com/watch?v=eGo4IYlbE5g",
+    note: "Agarre pronado, pecho al bar"
+  }, {
+    id: "1-1",
+    name: "Remo con barra",
+    sets: "4x10",
+    videoUrl: "",
+    note: "Espalda neutra todo el tiempo"
+  }, {
+    id: "1-2",
+    name: "Curl de bíceps",
+    sets: "3x12",
+    videoUrl: "",
+    note: "Sin balanceo de cadera"
+  }],
+  2: [{
+    id: "2-0",
+    name: "Correr / Elíptica",
+    sets: "30 min",
+    videoUrl: "",
+    note: "Ritmo moderado, zona 2"
+  }, {
+    id: "2-1",
+    name: "Plancha abdominal",
+    sets: "4x45 seg",
+    videoUrl: "https://www.youtube.com/watch?v=yeKv5oX_6GY",
+    note: "Cuerpo recto como tabla"
+  }, {
+    id: "2-2",
+    name: "Mountain climbers",
+    sets: "3x20",
+    videoUrl: "",
+    note: "Rápido y controlado"
+  }],
+  3: [{
+    id: "3-0",
+    name: "Escalera de agilidad",
+    sets: "5x20 seg",
+    videoUrl: "",
+    note: "Pasos rápidos, mira hacia adelante"
+  }, {
+    id: "3-1",
+    name: "Conos en zigzag",
+    sets: "5 rondas",
+    videoUrl: "",
+    note: "Cambios de dirección explosivos"
+  }, {
+    id: "3-2",
+    name: "Sentadilla con salto",
+    sets: "4x12",
+    videoUrl: "",
+    note: "Aterriza suave, rodillas suaves"
+  }, {
+    id: "3-3",
+    name: "Sprints cortos",
+    sets: "8x15 m",
+    videoUrl: "",
+    note: "Máxima velocidad, descansa entre series"
+  }],
+  4: [{
+    id: "4-0",
+    name: "Sentadilla profunda",
+    sets: "4x10",
+    videoUrl: "https://www.youtube.com/watch?v=aclHkVaku9U",
+    note: "Rodillas alineadas con pies"
+  }, {
+    id: "4-1",
+    name: "Peso muerto rumano",
+    sets: "3x12",
+    videoUrl: "",
+    note: "Caderas atrás, espalda recta"
+  }, {
+    id: "4-2",
+    name: "Hip thrust",
+    sets: "4x12",
+    videoUrl: "",
+    note: "Squeeze en la parte alta"
+  }],
+  5: [{
+    id: "5-0",
+    name: "Burpees",
+    sets: "4x10",
+    videoUrl: "",
+    note: "Explosivo en el salto"
+  }, {
+    id: "5-1",
+    name: "Sentadilla + Press",
+    sets: "3x12",
+    videoUrl: "",
+    note: "Movimiento fluido y continuo"
+  }, {
+    id: "5-2",
+    name: "Remo + curl",
+    sets: "3x12",
+    videoUrl: "",
+    note: "Mantén el core activado"
+  }, {
+    id: "5-3",
+    name: "Zancadas alternadas",
+    sets: "3x10 c/u",
+    videoUrl: "",
+    note: "Rodilla trasera casi al piso"
+  }],
+  6: [{
+    id: "6-0",
+    name: "Estiramiento de cadera",
+    sets: "3x40 seg",
+    videoUrl: "",
+    note: "Respira profundo, relaja"
+  }, {
+    id: "6-1",
+    name: "Cat-Cow (columna)",
+    sets: "3x10",
+    videoUrl: "",
+    note: "Movimiento lento y fluido"
+  }, {
+    id: "6-2",
+    name: "Rodillo de espuma",
+    sets: "10 min",
+    videoUrl: "",
+    note: "Zona más tensa hoy"
+  }]
+};
+function getYoutubeId(url) {
+  const match = url.match(/(?:v=|youtu\.be\/)([^&\n?#]+)/);
+  return match ? match[1] : null;
+}
+function getTodayIndex() {
+  const d = new Date().getDay();
+  return d === 0 ? 6 : d - 1;
+}
+function pad2(n) {
+  return String(n).padStart(2, "0");
+}
+function toDateKey(d) {
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+}
+function getMonday(d) {
+  const day = (d.getDay() + 6) % 7; // 0 = Monday
+  const monday = new Date(d);
+  monday.setDate(d.getDate() - day);
+  monday.setHours(0, 0, 0, 0);
+  return monday;
+}
+
+// Real calendar date (as a key string) for a given day-tab (0=Mon..6=Sun) in the current week
+function dateKeyForDay(dayIndex) {
+  const monday = getMonday(new Date());
+  const target = new Date(monday);
+  target.setDate(monday.getDate() + dayIndex);
+  return toDateKey(target);
+}
+function dayOfWeekFromDateKey(dateKey) {
+  const d = new Date(dateKey + "T00:00:00");
+  return (d.getDay() + 6) % 7;
+}
+function formatShortDate(d) {
+  return `${pad2(d.getDate())}/${pad2(d.getMonth() + 1)}`;
+}
+function WorkoutApp() {
+  const [activeDay, setActiveDay] = React.useState(getTodayIndex());
+  const [dayInfo, setDayInfo] = React.useState(DEFAULT_DAYS);
+  const [exercises, setExercises] = React.useState(DEFAULT_EXERCISES);
+  const [checked, setChecked] = React.useState({});
+  const [dayOut, setDayOut] = React.useState({});
+  const [loaded, setLoaded] = React.useState(false);
+  const [syncError, setSyncError] = React.useState(false);
+  const [isAdmin, setIsAdmin] = React.useState(false);
+  const [showAdminModal, setShowAdminModal] = React.useState(false);
+  const [pwInput, setPwInput] = React.useState("");
+  const [pwError, setPwError] = React.useState(false);
+  const [editMode, setEditMode] = React.useState(false);
+  const [selectedVideo, setSelectedVideo] = React.useState(null);
+  const [addingExercise, setAddingExercise] = React.useState(false);
+  const [newEx, setNewEx] = React.useState({
+    name: "",
+    sets: "",
+    videoUrl: "",
+    note: ""
+  });
+
+  // Subscribe to real-time updates from Firestore
+  React.useEffect(() => {
+    const unsubscribe = docRef.onSnapshot(snap => {
+      if (snap.exists) {
+        const data = snap.data();
+        setDayInfo(data.dayInfo || DEFAULT_DAYS);
+        setExercises(data.exercises || DEFAULT_EXERCISES);
+        setChecked(data.checked || {});
+        setDayOut(data.dayOut || {});
+      } else {
+        // First time ever — seed the cloud document with defaults
+        docRef.set({
+          dayInfo: DEFAULT_DAYS,
+          exercises: DEFAULT_EXERCISES,
+          checked: {},
+          dayOut: {}
+        });
+      }
+      setLoaded(true);
+      setSyncError(false);
+    }, err => {
+      console.error("Firestore sync error:", err);
+      setSyncError(true);
+      setLoaded(true);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // Push local changes up to Firestore (skip the very first render before cloud data arrives)
+  const skipFirstWrite = React.useRef(true);
+  React.useEffect(() => {
+    if (!loaded) return;
+    if (skipFirstWrite.current) {
+      skipFirstWrite.current = false;
+      return;
+    }
+    docRef.set({
+      dayInfo,
+      exercises,
+      checked,
+      dayOut
+    }, {
+      merge: true
+    }).catch(err => {
+      console.error("Firestore write error:", err);
+      setSyncError(true);
+    });
+  }, [dayInfo, exercises, checked, dayOut, loaded]);
+  const day = dayInfo[activeDay];
+  const dayExercises = exercises[activeDay] || [];
+  function toggleCheck(exId) {
+    const key = `${dateKeyForDay(activeDay)}-${exId}`;
+    setChecked(prev => ({
+      ...prev,
+      [key]: !prev[key]
+    }));
+  }
+  function isChecked(exId) {
+    return !!checked[`${dateKeyForDay(activeDay)}-${exId}`];
+  }
+  function isDayOut(dateKey) {
+    return !!dayOut[dateKey];
+  }
+  function toggleDayOut() {
+    const dateKey = dateKeyForDay(activeDay);
+    setDayOut(prev => ({
+      ...prev,
+      [dateKey]: !prev[dateKey]
+    }));
+  }
+
+  // % completed for a specific real calendar date, using the exercise template for that date's weekday.
+  // Returns null if there's no template OR the day was marked "Day Out" (excluded from totals).
+  function progressForDate(dateKey) {
+    if (isDayOut(dateKey)) return null;
+    const dow = dayOfWeekFromDateKey(dateKey);
+    const list = exercises[dow] || [];
+    if (list.length === 0) return null; // no template for that day — don't count it
+    const done = list.filter(ex => checked[`${dateKey}-${ex.id}`]).length;
+    return {
+      done,
+      total: list.length,
+      pct: Math.round(done / list.length * 100)
+    };
+  }
+  function todayProgress() {
+    const p = progressForDate(toDateKey(new Date()));
+    return p ? p.pct : 0;
+  }
+  function weeklyProgress() {
+    let total = 0,
+      done = 0;
+    for (let i = 0; i < 7; i++) {
+      const list = exercises[i] || [];
+      const dateKey = dateKeyForDay(i);
+      total += list.length;
+      done += list.filter(ex => checked[`${dateKey}-${ex.id}`]).length;
+    }
+    return total === 0 ? 0 : Math.round(done / total * 100);
+  }
+  function monthlyProgress() {
+    const now = new Date();
+    const start = new Date(now.getFullYear(), now.getMonth(), 1);
+    let total = 0,
+      done = 0;
+    for (let d = new Date(start); d <= now; d.setDate(d.getDate() + 1)) {
+      const p = progressForDate(toDateKey(d));
+      if (p) {
+        total += p.total;
+        done += p.done;
+      }
+    }
+    return total === 0 ? 0 : Math.round(done / total * 100);
+  }
+  function currentStreak() {
+    let streak = 0;
+    let d = new Date();
+    let isToday = true;
+    while (true) {
+      const p = progressForDate(toDateKey(d));
+      if (!p) {
+        d.setDate(d.getDate() - 1);
+        isToday = false;
+        continue;
+      } // no template that day, skip without breaking streak
+      const complete = p.done === p.total;
+      if (complete) {
+        streak++;
+        d.setDate(d.getDate() - 1);
+        isToday = false;
+      } else if (isToday) {
+        // today not finished yet — doesn't break the streak, just don't count it
+        d.setDate(d.getDate() - 1);
+        isToday = false;
+      } else {
+        break;
+      }
+    }
+    return streak;
+  }
+  function dayProgress(dayId) {
+    const list = exercises[dayId] || [];
+    if (list.length === 0) return 0;
+    const dateKey = dateKeyForDay(dayId);
+    const done = list.filter(ex => checked[`${dateKey}-${ex.id}`]).length;
+    return Math.round(done / list.length * 100);
+  }
+  function isDayOutForTab(dayId) {
+    return isDayOut(dateKeyForDay(dayId));
+  }
+  function removeExercise(exId) {
+    setExercises(prev => ({
+      ...prev,
+      [activeDay]: prev[activeDay].filter(e => e.id !== exId)
+    }));
+  }
+  function addExercise() {
+    if (!newEx.name.trim()) return;
+    const id = `${activeDay}-${Date.now()}`;
+    setExercises(prev => ({
+      ...prev,
+      [activeDay]: [...(prev[activeDay] || []), {
+        ...newEx,
+        id
+      }]
+    }));
+    setNewEx({
+      name: "",
+      sets: "",
+      videoUrl: "",
+      note: ""
+    });
+    setAddingExercise(false);
+  }
+  function updateExField(exId, field, value) {
+    setExercises(prev => ({
+      ...prev,
+      [activeDay]: prev[activeDay].map(e => e.id === exId ? {
+        ...e,
+        [field]: value
+      } : e)
+    }));
+  }
+  function updateDayField(dayId, field, value) {
+    setDayInfo(prev => prev.map(d => d.id === dayId ? {
+      ...d,
+      [field]: value
+    } : d));
+  }
+  function handleAdminLogin() {
+    if (pwInput === ADMIN_PASSWORD) {
+      setIsAdmin(true);
+      setShowAdminModal(false);
+      setPwInput("");
+      setPwError(false);
+    } else {
+      setPwError(true);
+      setPwInput("");
+    }
+  }
+  function handleAdminLogout() {
+    setIsAdmin(false);
+    setEditMode(false);
+    setAddingExercise(false);
+  }
+  const wp = weeklyProgress();
+  const mp = monthlyProgress();
+  const tp = todayProgress();
+  const streak = currentStreak();
+  const monday = getMonday(new Date());
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+  const weekRangeLabel = `${formatShortDate(monday)} - ${formatShortDate(sunday)}`;
+  const monthLabel = new Date().toLocaleDateString("es-ES", {
+    month: "long",
+    year: "numeric"
+  });
+  if (!loaded) {
+    return /*#__PURE__*/React.createElement("div", {
+      style: {
+        minHeight: "100vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "#0d3b1e",
+        color: "#fff",
+        flexDirection: "column",
+        gap: 12
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 48
+      }
+    }, "⚽"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontWeight: 800,
+        fontSize: 16
+      }
+    }, "Conectando con la nube..."));
+  }
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontFamily: "'Nunito', 'Segoe UI', sans-serif",
+      minHeight: "100vh",
+      background: "linear-gradient(180deg, #eef7ee 0%, #fdf9f0 100%)",
+      backgroundImage: "repeating-linear-gradient(180deg, rgba(20,90,50,0.025) 0px, rgba(20,90,50,0.025) 40px, transparent 40px, transparent 80px), linear-gradient(180deg, #eef7ee 0%, #fdf9f0 100%)"
+    }
+  }, syncError && /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "#DC2626",
+      color: "#fff",
+      textAlign: "center",
+      padding: "8px",
+      fontSize: 13,
+      fontWeight: 700
+    }
+  }, "⚠️ Sin conexión con la nube — revisa tu internet o la configuración de Firebase"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "linear-gradient(135deg, #0d3b1e 0%, #145a32 45%, #1a1a2e 100%)",
+      backgroundImage: `
+          repeating-linear-gradient(90deg, rgba(255,255,255,0.05) 0px, rgba(255,255,255,0.05) 2px, transparent 2px, transparent 60px),
+          radial-gradient(circle at 85% 15%, rgba(255,255,255,0.12) 0%, transparent 35%),
+          linear-gradient(135deg, #0d3b1e 0%, #145a32 45%, #1a1a2e 100%)
+        `,
+      padding: "24px 20px 16px",
+      position: "sticky",
+      top: 0,
+      zIndex: 100,
+      boxShadow: "0 4px 20px rgba(0,0,0,0.3)",
+      overflow: "hidden"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      position: "absolute",
+      right: -20,
+      top: -20,
+      fontSize: 130,
+      opacity: 0.1,
+      transform: "rotate(15deg)",
+      pointerEvents: "none"
+    }
+  }, "⚽"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      maxWidth: 700,
+      margin: "0 auto",
+      position: "relative",
+      zIndex: 1
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: 14
+    }
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("h1", {
+    style: {
+      margin: 0,
+      color: "#fff",
+      fontSize: 24,
+      fontWeight: 900,
+      letterSpacing: -0.5,
+      textShadow: "0 2px 12px rgba(0,0,0,0.4)"
+    }
+  }, "⚽ Dante's Training"), /*#__PURE__*/React.createElement("p", {
+    style: {
+      margin: "2px 0 0",
+      color: "rgba(255,255,255,0.5)",
+      fontSize: 12
+    }
+  }, "Semana ", weekRangeLabel, isAdmin && /*#__PURE__*/React.createElement("span", {
+    style: {
+      marginLeft: 8,
+      background: "#FF6B35",
+      color: "#fff",
+      borderRadius: 6,
+      padding: "1px 7px",
+      fontSize: 10,
+      fontWeight: 800
+    }
+  }, "🔑 Admin"))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "flex-end",
+      gap: 6
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: "#fff",
+      fontSize: 13,
+      fontWeight: 700
+    }
+  }, "Progreso: ", /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: wp >= 80 ? "#4ade80" : wp >= 50 ? "#facc15" : "#ff6b6b"
+    }
+  }, wp, "%")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "rgba(255,255,255,0.15)",
+      borderRadius: 99,
+      height: 8,
+      width: 140
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "linear-gradient(90deg, #FF6B35, #FFE66D)",
+      height: 8,
+      borderRadius: 99,
+      width: `${wp}%`,
+      transition: "width 0.5s ease"
+    }
+  })), isAdmin ? /*#__PURE__*/React.createElement("button", {
+    onClick: handleAdminLogout,
+    style: {
+      background: "rgba(255,255,255,0.12)",
+      border: "1px solid rgba(255,255,255,0.2)",
+      color: "rgba(255,255,255,0.7)",
+      borderRadius: 8,
+      padding: "4px 10px",
+      fontSize: 11,
+      fontWeight: 700,
+      cursor: "pointer"
+    }
+  }, "🔓 Salir de admin") : /*#__PURE__*/React.createElement("button", {
+    onClick: () => {
+      setShowAdminModal(true);
+      setPwError(false);
+      setPwInput("");
+    },
+    style: {
+      background: "rgba(255,255,255,0.08)",
+      border: "1px solid rgba(255,255,255,0.15)",
+      color: "rgba(255,255,255,0.4)",
+      borderRadius: 8,
+      padding: "4px 10px",
+      fontSize: 11,
+      cursor: "pointer"
+    }
+  }, "🔒 Admin"))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 6,
+      overflowX: "auto",
+      paddingBottom: 4
+    }
+  }, dayInfo.map(d => {
+    const dp = dayProgress(d.id);
+    const isActive = d.id === activeDay;
+    const isToday = d.id === getTodayIndex();
+    const out = isDayOutForTab(d.id);
+    return /*#__PURE__*/React.createElement("button", {
+      key: d.id,
+      onClick: () => setActiveDay(d.id),
+      style: {
+        flex: "0 0 auto",
+        padding: "8px 12px",
+        borderRadius: 14,
+        border: isActive ? `2px solid ${d.color}` : "2px solid transparent",
+        background: isActive ? d.color : "rgba(255,255,255,0.08)",
+        color: isActive ? "#fff" : "rgba(255,255,255,0.6)",
+        cursor: "pointer",
+        transition: "all 0.2s",
+        position: "relative",
+        minWidth: 56
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 11,
+        fontWeight: 800
+      }
+    }, d.short), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 14
+      }
+    }, d.emoji), out && /*#__PURE__*/React.createElement("div", {
+      style: {
+        position: "absolute",
+        top: -4,
+        right: -4,
+        background: "#0284C7",
+        borderRadius: "50%",
+        width: 14,
+        height: 14,
+        fontSize: 8,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center"
+      }
+    }, "⚽"), !out && dp === 100 && /*#__PURE__*/React.createElement("div", {
+      style: {
+        position: "absolute",
+        top: -4,
+        right: -4,
+        background: "#4ade80",
+        borderRadius: "50%",
+        width: 14,
+        height: 14,
+        fontSize: 8,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        color: "#fff",
+        fontWeight: 900
+      }
+    }, "✓"), isToday && !isActive && /*#__PURE__*/React.createElement("div", {
+      style: {
+        position: "absolute",
+        bottom: -6,
+        left: "50%",
+        transform: "translateX(-50%)",
+        width: 5,
+        height: 5,
+        borderRadius: "50%",
+        background: "#facc15"
+      }
+    }));
+  })))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      maxWidth: 700,
+      margin: "0 auto",
+      padding: "20px 16px"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: `linear-gradient(135deg, ${day.color}, ${day.color}cc)`,
+      borderRadius: 20,
+      padding: "20px 24px",
+      marginBottom: 20,
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      boxShadow: `0 8px 32px ${day.color}44`
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: "rgba(255,255,255,0.8)",
+      fontSize: 13,
+      fontWeight: 700,
+      textTransform: "uppercase",
+      letterSpacing: 1
+    }
+  }, day.name), isAdmin && editMode ? /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 6,
+      alignItems: "center",
+      marginTop: 6
+    }
+  }, /*#__PURE__*/React.createElement("input", {
+    value: day.emoji,
+    onChange: e => updateDayField(day.id, "emoji", e.target.value),
+    style: {
+      width: 44,
+      border: "none",
+      borderRadius: 8,
+      padding: "6px 4px",
+      fontSize: 18,
+      textAlign: "center",
+      boxSizing: "border-box"
+    }
+  }), /*#__PURE__*/React.createElement("input", {
+    value: day.focus,
+    onChange: e => updateDayField(day.id, "focus", e.target.value),
+    placeholder: "Enfoque del día",
+    style: {
+      flex: 1,
+      border: "none",
+      borderRadius: 8,
+      padding: "8px 12px",
+      fontSize: 16,
+      fontWeight: 800,
+      boxSizing: "border-box"
+    }
+  })) : /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: "#fff",
+      fontSize: 22,
+      fontWeight: 900,
+      marginTop: 2
+    }
+  }, day.emoji, " ", day.focus), /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: "rgba(255,255,255,0.7)",
+      fontSize: 13,
+      marginTop: 4
+    }
+  }, isDayOutForTab(activeDay) ? "⚽ Día libre — no cuenta para el progreso" : `${dayExercises.filter(e => isChecked(e.id)).length} / ${dayExercises.length} ejercicios completados`)), /*#__PURE__*/React.createElement("div", {
+    style: {
+      textAlign: "center"
+    }
+  }, isDayOutForTab(activeDay) ? /*#__PURE__*/React.createElement("div", {
+    style: {
+      width: 64,
+      height: 64,
+      borderRadius: "50%",
+      background: "rgba(255,255,255,0.25)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      fontSize: 28
+    }
+  }, "⚽") : /*#__PURE__*/React.createElement("div", {
+    style: {
+      width: 64,
+      height: 64,
+      borderRadius: "50%",
+      background: "rgba(255,255,255,0.2)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      position: "relative"
+    }
+  }, /*#__PURE__*/React.createElement("svg", {
+    width: "64",
+    height: "64",
+    style: {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      transform: "rotate(-90deg)"
+    }
+  }, /*#__PURE__*/React.createElement("circle", {
+    cx: "32",
+    cy: "32",
+    r: "28",
+    fill: "none",
+    stroke: "rgba(255,255,255,0.2)",
+    strokeWidth: "4"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: "32",
+    cy: "32",
+    r: "28",
+    fill: "none",
+    stroke: "#fff",
+    strokeWidth: "4",
+    strokeDasharray: `${2 * Math.PI * 28}`,
+    strokeDashoffset: `${2 * Math.PI * 28 * (1 - dayProgress(activeDay) / 100)}`,
+    style: {
+      transition: "stroke-dashoffset 0.5s ease"
+    }
+  })), /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: "#fff",
+      fontSize: 15,
+      fontWeight: 900,
+      position: "relative"
+    }
+  }, dayProgress(activeDay), "%")))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: 12,
+      flexWrap: "wrap",
+      gap: 8
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: toggleDayOut,
+    style: {
+      background: isDayOutForTab(activeDay) ? "#0284C7" : "rgba(2,132,199,0.08)",
+      color: isDayOutForTab(activeDay) ? "#fff" : "#0284C7",
+      border: `1.5px solid ${isDayOutForTab(activeDay) ? "#0284C7" : "rgba(2,132,199,0.3)"}`,
+      borderRadius: 10,
+      padding: "7px 14px",
+      fontSize: 12,
+      fontWeight: 700,
+      cursor: "pointer",
+      display: "flex",
+      alignItems: "center",
+      gap: 6
+    }
+  }, "⚽ ", isDayOutForTab(activeDay) ? "Día libre activado" : "Marcar día libre"), isAdmin && /*#__PURE__*/React.createElement("button", {
+    onClick: () => {
+      setEditMode(!editMode);
+      setAddingExercise(false);
+    },
+    style: {
+      background: editMode ? "#DC2626" : "rgba(0,0,0,0.06)",
+      color: editMode ? "#fff" : "#555",
+      border: "none",
+      borderRadius: 10,
+      padding: "7px 16px",
+      fontSize: 12,
+      fontWeight: 700,
+      cursor: "pointer"
+    }
+  }, editMode ? "✓ Listo" : "✏️ Editar día")), isDayOutForTab(activeDay) && !(isAdmin && editMode) ? /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "#fff",
+      border: "2px dashed #0284C7",
+      borderRadius: 18,
+      padding: "28px 20px",
+      textAlign: "center"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 40,
+      marginBottom: 8
+    }
+  }, "⚽"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 800,
+      fontSize: 16,
+      color: "#0284C7",
+      marginBottom: 4
+    }
+  }, "Día de entrenamiento de fútbol"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: "#888",
+      fontSize: 13
+    }
+  }, "Este día no cuenta para el progreso del gym. ¡Buen trabajo en la cancha! 🥅")) : /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      flexDirection: "column",
+      gap: 14
+    }
+  }, dayExercises.map(ex => {
+    const done = isChecked(ex.id);
+    const ytId = ex.videoUrl ? getYoutubeId(ex.videoUrl) : null;
+    return /*#__PURE__*/React.createElement("div", {
+      key: ex.id,
+      style: {
+        background: done ? `linear-gradient(135deg, ${day.bg}, ${day.color}15)` : "#fff",
+        border: `2px solid ${done ? day.color : "#f0f0f0"}`,
+        borderRadius: 18,
+        padding: "16px 18px",
+        transition: "all 0.3s",
+        boxShadow: done ? `0 4px 16px ${day.color}22` : "0 2px 8px rgba(0,0,0,0.04)",
+        position: "relative",
+        overflow: "hidden"
+      }
+    }, done && /*#__PURE__*/React.createElement("div", {
+      style: {
+        position: "absolute",
+        top: 0,
+        left: 0,
+        right: 0,
+        height: 3,
+        background: `linear-gradient(90deg, ${day.color}, transparent)`
+      }
+    }), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        alignItems: "flex-start",
+        gap: 14
+      }
+    }, /*#__PURE__*/React.createElement("button", {
+      onClick: () => toggleCheck(ex.id),
+      style: {
+        width: 28,
+        height: 28,
+        borderRadius: "50%",
+        border: `2.5px solid ${done ? day.color : "#ddd"}`,
+        background: done ? day.color : "transparent",
+        cursor: "pointer",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        flexShrink: 0,
+        transition: "all 0.2s",
+        marginTop: 2
+      }
+    }, done && /*#__PURE__*/React.createElement("span", {
+      style: {
+        color: "#fff",
+        fontSize: 14,
+        fontWeight: 900
+      }
+    }, "✓")), /*#__PURE__*/React.createElement("div", {
+      style: {
+        flex: 1
+      }
+    }, isAdmin && editMode ? /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        flexDirection: "column",
+        gap: 6
+      }
+    }, /*#__PURE__*/React.createElement("input", {
+      value: ex.name,
+      onChange: e => updateExField(ex.id, "name", e.target.value),
+      style: {
+        border: "1.5px solid #e5e7eb",
+        borderRadius: 8,
+        padding: "5px 10px",
+        fontSize: 14,
+        fontWeight: 700,
+        width: "100%",
+        boxSizing: "border-box"
+      }
+    }), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        gap: 6
+      }
+    }, /*#__PURE__*/React.createElement("input", {
+      value: ex.sets,
+      onChange: e => updateExField(ex.id, "sets", e.target.value),
+      placeholder: "Series x reps",
+      style: {
+        border: "1.5px solid #e5e7eb",
+        borderRadius: 8,
+        padding: "5px 10px",
+        fontSize: 13,
+        width: "40%",
+        boxSizing: "border-box"
+      }
+    }), /*#__PURE__*/React.createElement("input", {
+      value: ex.videoUrl,
+      onChange: e => updateExField(ex.id, "videoUrl", e.target.value),
+      placeholder: "Link YouTube",
+      style: {
+        border: "1.5px solid #e5e7eb",
+        borderRadius: 8,
+        padding: "5px 10px",
+        fontSize: 13,
+        flex: 1,
+        boxSizing: "border-box"
+      }
+    })), /*#__PURE__*/React.createElement("input", {
+      value: ex.note,
+      onChange: e => updateExField(ex.id, "note", e.target.value),
+      placeholder: "Nota técnica...",
+      style: {
+        border: "1.5px solid #e5e7eb",
+        borderRadius: 8,
+        padding: "5px 10px",
+        fontSize: 13,
+        width: "100%",
+        boxSizing: "border-box"
+      }
+    }), /*#__PURE__*/React.createElement("button", {
+      onClick: () => removeExercise(ex.id),
+      style: {
+        background: "#fee2e2",
+        color: "#DC2626",
+        border: "none",
+        borderRadius: 8,
+        padding: "5px 12px",
+        fontSize: 12,
+        fontWeight: 700,
+        cursor: "pointer",
+        alignSelf: "flex-start"
+      }
+    }, "🗑 Eliminar")) : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: 8
+      }
+    }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontWeight: 800,
+        fontSize: 16,
+        color: done ? day.color : "#1a1a2e",
+        textDecoration: done ? "line-through" : "none",
+        opacity: done ? 0.7 : 1
+      }
+    }, ex.name), ex.sets && /*#__PURE__*/React.createElement("span", {
+      style: {
+        marginLeft: 8,
+        background: `${day.color}18`,
+        color: day.color,
+        fontSize: 11,
+        fontWeight: 800,
+        borderRadius: 6,
+        padding: "2px 8px"
+      }
+    }, ex.sets)), ytId && /*#__PURE__*/React.createElement("button", {
+      onClick: () => setSelectedVideo({
+        ytId,
+        name: ex.name
+      }),
+      style: {
+        background: "#FF0000",
+        color: "#fff",
+        border: "none",
+        borderRadius: 8,
+        padding: "5px 10px",
+        fontSize: 11,
+        fontWeight: 800,
+        cursor: "pointer",
+        display: "flex",
+        alignItems: "center",
+        gap: 4,
+        flexShrink: 0
+      }
+    }, "▶ Ver"), ex.videoUrl && !ytId && /*#__PURE__*/React.createElement("a", {
+      href: ex.videoUrl,
+      target: "_blank",
+      rel: "noopener noreferrer",
+      style: {
+        background: "#0284C7",
+        color: "#fff",
+        borderRadius: 8,
+        padding: "5px 10px",
+        fontSize: 11,
+        fontWeight: 800,
+        textDecoration: "none",
+        flexShrink: 0
+      }
+    }, "🎬 Ver video")), ex.note && /*#__PURE__*/React.createElement("div", {
+      style: {
+        marginTop: 6,
+        fontSize: 12,
+        color: "#888",
+        fontStyle: "italic",
+        display: "flex",
+        alignItems: "center",
+        gap: 4
+      }
+    }, /*#__PURE__*/React.createElement("span", null, "💡"), " ", ex.note)))));
+  }), isAdmin && editMode && (addingExercise ? /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "#f8faff",
+      border: "2px dashed #c7d2fe",
+      borderRadius: 18,
+      padding: "16px 18px"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 800,
+      fontSize: 14,
+      marginBottom: 10,
+      color: "#4f46e5"
+    }
+  }, "➕ Nuevo ejercicio"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      flexDirection: "column",
+      gap: 8
+    }
+  }, /*#__PURE__*/React.createElement("input", {
+    value: newEx.name,
+    onChange: e => setNewEx(p => ({
+      ...p,
+      name: e.target.value
+    })),
+    placeholder: "Nombre del ejercicio *",
+    style: {
+      border: "1.5px solid #e5e7eb",
+      borderRadius: 8,
+      padding: "8px 12px",
+      fontSize: 14
+    }
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 6
+    }
+  }, /*#__PURE__*/React.createElement("input", {
+    value: newEx.sets,
+    onChange: e => setNewEx(p => ({
+      ...p,
+      sets: e.target.value
+    })),
+    placeholder: "Series x reps",
+    style: {
+      border: "1.5px solid #e5e7eb",
+      borderRadius: 8,
+      padding: "8px 12px",
+      fontSize: 13,
+      flex: 1
+    }
+  }), /*#__PURE__*/React.createElement("input", {
+    value: newEx.videoUrl,
+    onChange: e => setNewEx(p => ({
+      ...p,
+      videoUrl: e.target.value
+    })),
+    placeholder: "Link YouTube",
+    style: {
+      border: "1.5px solid #e5e7eb",
+      borderRadius: 8,
+      padding: "8px 12px",
+      fontSize: 13,
+      flex: 2
+    }
+  })), /*#__PURE__*/React.createElement("input", {
+    value: newEx.note,
+    onChange: e => setNewEx(p => ({
+      ...p,
+      note: e.target.value
+    })),
+    placeholder: "Nota técnica (opcional)",
+    style: {
+      border: "1.5px solid #e5e7eb",
+      borderRadius: 8,
+      padding: "8px 12px",
+      fontSize: 13
+    }
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 8
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: addExercise,
+    style: {
+      background: day.color,
+      color: "#fff",
+      border: "none",
+      borderRadius: 10,
+      padding: "9px 20px",
+      fontWeight: 800,
+      cursor: "pointer",
+      fontSize: 13
+    }
+  }, "Guardar"), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setAddingExercise(false),
+    style: {
+      background: "#f0f0f0",
+      color: "#666",
+      border: "none",
+      borderRadius: 10,
+      padding: "9px 20px",
+      fontWeight: 700,
+      cursor: "pointer",
+      fontSize: 13
+    }
+  }, "Cancelar")))) : /*#__PURE__*/React.createElement("button", {
+    onClick: () => setAddingExercise(true),
+    style: {
+      background: "transparent",
+      border: `2px dashed ${day.color}`,
+      borderRadius: 18,
+      padding: "14px",
+      color: day.color,
+      fontWeight: 800,
+      fontSize: 14,
+      cursor: "pointer",
+      width: "100%"
+    }
+  }, "➕ Agregar ejercicio"))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginTop: 28,
+      background: "linear-gradient(135deg, #0d3b1e, #145a32)",
+      borderRadius: 20,
+      padding: "20px",
+      boxShadow: "0 8px 24px rgba(13,59,30,0.25)"
+    }
+  }, /*#__PURE__*/React.createElement("h3", {
+    style: {
+      margin: "0 0 16px",
+      fontSize: 15,
+      fontWeight: 900,
+      color: "#fff",
+      display: "flex",
+      alignItems: "center",
+      gap: 6
+    }
+  }, "📈 Resumen de progreso de Dante"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "grid",
+      gridTemplateColumns: "1fr 1fr",
+      gap: 12
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "rgba(255,255,255,0.1)",
+      borderRadius: 14,
+      padding: "12px 14px"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: "rgba(255,255,255,0.6)",
+      fontSize: 11,
+      fontWeight: 700,
+      textTransform: "uppercase",
+      letterSpacing: 0.5
+    }
+  }, "Hoy"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: "#fff",
+      fontSize: 26,
+      fontWeight: 900
+    }
+  }, tp, "%")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "rgba(255,255,255,0.1)",
+      borderRadius: 14,
+      padding: "12px 14px"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: "rgba(255,255,255,0.6)",
+      fontSize: 11,
+      fontWeight: 700,
+      textTransform: "uppercase",
+      letterSpacing: 0.5
+    }
+  }, "Esta semana"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: "#fff",
+      fontSize: 26,
+      fontWeight: 900
+    }
+  }, wp, "%")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "rgba(255,255,255,0.1)",
+      borderRadius: 14,
+      padding: "12px 14px"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: "rgba(255,255,255,0.6)",
+      fontSize: 11,
+      fontWeight: 700,
+      textTransform: "uppercase",
+      letterSpacing: 0.5
+    }
+  }, "Este mes (", monthLabel, ")"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: "#fff",
+      fontSize: 26,
+      fontWeight: 900
+    }
+  }, mp, "%")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "rgba(255,255,255,0.1)",
+      borderRadius: 14,
+      padding: "12px 14px"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: "rgba(255,255,255,0.6)",
+      fontSize: 11,
+      fontWeight: 700,
+      textTransform: "uppercase",
+      letterSpacing: 0.5
+    }
+  }, "Racha actual"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: "#fff",
+      fontSize: 26,
+      fontWeight: 900
+    }
+  }, "🔥 ", streak, " ", streak === 1 ? "día" : "días")))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginTop: 16,
+      background: "#fff",
+      borderRadius: 20,
+      padding: "20px",
+      boxShadow: "0 2px 12px rgba(0,0,0,0.06)"
+    }
+  }, /*#__PURE__*/React.createElement("h3", {
+    style: {
+      margin: "0 0 16px",
+      fontSize: 15,
+      fontWeight: 900,
+      color: "#1a1a2e"
+    }
+  }, "📊 Días de esta semana"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      flexDirection: "column",
+      gap: 10
+    }
+  }, dayInfo.map(d => {
+    const dp = dayProgress(d.id);
+    const exCount = (exercises[d.id] || []).length;
+    const dateKey = dateKeyForDay(d.id);
+    const doneCount = (exercises[d.id] || []).filter(e => checked[`${dateKey}-${e.id}`]).length;
+    const out = isDayOut(dateKey);
+    return /*#__PURE__*/React.createElement("div", {
+      key: d.id,
+      onClick: () => setActiveDay(d.id),
+      style: {
+        cursor: "pointer",
+        display: "flex",
+        alignItems: "center",
+        gap: 10
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        width: 28,
+        fontSize: 13,
+        fontWeight: 800,
+        color: d.id === activeDay ? d.color : "#888"
+      }
+    }, d.short), /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 16
+      }
+    }, d.emoji), out ? /*#__PURE__*/React.createElement("div", {
+      style: {
+        flex: 1,
+        color: "#0284C7",
+        fontSize: 12,
+        fontWeight: 700,
+        display: "flex",
+        alignItems: "center",
+        gap: 4
+      }
+    }, "⚽ Día libre — no cuenta") : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+      style: {
+        flex: 1,
+        background: "#f3f4f6",
+        borderRadius: 99,
+        height: 10,
+        overflow: "hidden"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        background: `linear-gradient(90deg, ${d.color}, ${d.color}88)`,
+        height: 10,
+        borderRadius: 99,
+        width: `${dp}%`,
+        transition: "width 0.4s ease"
+      }
+    })), /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 12,
+        fontWeight: 700,
+        color: dp === 100 ? "#4ade80" : "#999",
+        minWidth: 48,
+        textAlign: "right"
+      }
+    }, dp === 100 ? "✅ Listo" : `${doneCount}/${exCount}`)));
+  }))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      textAlign: "center",
+      marginTop: 24,
+      color: "#bbb",
+      fontSize: 11
+    }
+  }, "El progreso se guarda en la nube • Semana ", weekRangeLabel)), showAdminModal && /*#__PURE__*/React.createElement("div", {
+    onClick: () => setShowAdminModal(false),
+    style: {
+      position: "fixed",
+      inset: 0,
+      background: "rgba(0,0,0,0.7)",
+      zIndex: 999,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      padding: 24
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    onClick: e => e.stopPropagation(),
+    style: {
+      background: "#fff",
+      borderRadius: 24,
+      padding: "32px 28px",
+      width: "100%",
+      maxWidth: 340,
+      boxShadow: "0 24px 64px rgba(0,0,0,0.3)",
+      textAlign: "center"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 40,
+      marginBottom: 8
+    }
+  }, "🔐"), /*#__PURE__*/React.createElement("h2", {
+    style: {
+      margin: "0 0 6px",
+      fontSize: 20,
+      fontWeight: 900,
+      color: "#1a1a2e"
+    }
+  }, "Modo Administrador"), /*#__PURE__*/React.createElement("p", {
+    style: {
+      margin: "0 0 20px",
+      fontSize: 13,
+      color: "#888"
+    }
+  }, "Solo para el coach. Ingresa tu contraseña."), /*#__PURE__*/React.createElement("input", {
+    type: "password",
+    value: pwInput,
+    onChange: e => {
+      setPwInput(e.target.value);
+      setPwError(false);
+    },
+    onKeyDown: e => e.key === "Enter" && handleAdminLogin(),
+    placeholder: "Contraseña",
+    autoFocus: true,
+    style: {
+      width: "100%",
+      boxSizing: "border-box",
+      border: `2px solid ${pwError ? "#DC2626" : "#e5e7eb"}`,
+      borderRadius: 12,
+      padding: "12px 16px",
+      fontSize: 16,
+      outline: "none",
+      marginBottom: 6,
+      textAlign: "center",
+      letterSpacing: 4
+    }
+  }), pwError && /*#__PURE__*/React.createElement("p", {
+    style: {
+      color: "#DC2626",
+      fontSize: 13,
+      margin: "0 0 12px",
+      fontWeight: 700
+    }
+  }, "❌ Contraseña incorrecta"), !pwError && /*#__PURE__*/React.createElement("div", {
+    style: {
+      height: 18,
+      marginBottom: 12
+    }
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 10
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setShowAdminModal(false),
+    style: {
+      flex: 1,
+      background: "#f3f4f6",
+      color: "#555",
+      border: "none",
+      borderRadius: 12,
+      padding: "12px",
+      fontWeight: 700,
+      cursor: "pointer",
+      fontSize: 14
+    }
+  }, "Cancelar"), /*#__PURE__*/React.createElement("button", {
+    onClick: handleAdminLogin,
+    style: {
+      flex: 1,
+      background: "linear-gradient(135deg, #FF6B35, #f59e0b)",
+      color: "#fff",
+      border: "none",
+      borderRadius: 12,
+      padding: "12px",
+      fontWeight: 800,
+      cursor: "pointer",
+      fontSize: 14
+    }
+  }, "Entrar")))), selectedVideo && /*#__PURE__*/React.createElement("div", {
+    onClick: () => setSelectedVideo(null),
+    style: {
+      position: "fixed",
+      inset: 0,
+      background: "rgba(0,0,0,0.85)",
+      zIndex: 999,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      padding: 16
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    onClick: e => e.stopPropagation(),
+    style: {
+      background: "#fff",
+      borderRadius: 20,
+      overflow: "hidden",
+      width: "100%",
+      maxWidth: 640
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: "14px 18px",
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      borderBottom: "1px solid #f0f0f0"
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontWeight: 800,
+      fontSize: 15
+    }
+  }, "▶ ", selectedVideo.name), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setSelectedVideo(null),
+    style: {
+      background: "none",
+      border: "none",
+      fontSize: 20,
+      cursor: "pointer",
+      color: "#888"
+    }
+  }, "✕")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      aspectRatio: "16/9",
+      background: "#000"
+    }
+  }, /*#__PURE__*/React.createElement("iframe", {
+    width: "100%",
+    height: "100%",
+    src: `https://www.youtube.com/embed/${selectedVideo.ytId}?autoplay=1`,
+    allow: "autoplay; encrypted-media",
+    allowFullScreen: true,
+    style: {
+      border: "none",
+      display: "block"
+    }
+  })))));
+}
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(/*#__PURE__*/React.createElement(WorkoutApp, null));</script>
+</body>
+</html>
